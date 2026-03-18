@@ -9,12 +9,12 @@
 body {
   margin: 0;
   background: transparent;
+  font-family: 'Segoe UI', Arial, sans-serif;
 }
 
 /* Widget styles */
 .cas-widget {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  max-width: 860px;
+  max-width: 900px;
   margin: 0 auto;
   border-radius: 12px;
   overflow: hidden;
@@ -42,38 +42,35 @@ body {
   color: #7a9bbf;
 }
 
-.cas-match {
-  border-bottom: 1px solid #1a2f4a;
-  padding: 16px 20px;
+.cas-league-group {
+  margin: 10px 0;
 }
 
-.cas-match-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.cas-league {
-  font-size: 0.7rem;
-  color: #7a9bbf;
+.cas-league-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #88aadd;
+  padding: 6px 20px;
   text-transform: uppercase;
+  background: #102040;
 }
 
-.cas-badge {
-  font-size: 0.7rem;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-weight: bold;
-}
-
-.cas-live { color: #ff5555; }
-.cas-ft { color: #50d090; }
-.cas-pre { color: #88aadd; }
-
-.cas-scoreline {
+.cas-match {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid #1a2f4a;
+  transition: background 0.2s;
+}
+
+.cas-match:hover {
+  background: #0f2030;
+}
+
+.cas-team {
+  display: flex;
+  align-items: center;
 }
 
 .cas-team-name {
@@ -85,56 +82,130 @@ body {
   font-size: 1.5rem;
   font-weight: bold;
   color: #fff;
+  min-width: 80px;
+  text-align: center;
+}
+
+.cas-badge {
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cas-live {
+  color: #ff5555;
+}
+
+.cas-ft {
+  color: #50d090;
+}
+
+.cas-pre {
+  color: #88aadd;
+}
+
+.cas-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff5555;
+  animation: cas-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes cas-pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* Empty state */
+.cas-empty {
+  padding: 28px;
+  text-align: center;
+  color: #4a6a88;
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 520px) {
+  .cas-score { font-size: 1.2rem; min-width: 60px; }
+  .cas-team-name { font-size: 0.82rem; }
 }
 </style>
 </head>
-
 <body>
 
 <div id="cas-livescore"></div>
 
 <script>
 const GIST_URL = "https://gist.githubusercontent.com/chunkehdemunkeh-afk/250ca7f539145a1ae3deae88cb5f360e/raw/ae2459ce2e6f7497e272fa864c9c69a3e6bd6610/gistfile1.txt";
+const POLL_MS = 60000;
 
 function renderMatch(match) {
+  const statusClass = match.status === "LIVE" ? "cas-live" : match.status === "FT" ? "cas-ft" : "cas-pre";
+  const isLive = match.status === "LIVE";
   return `
-    <div class="cas-match">
-      <div class="cas-match-header">
-        <span class="cas-league">${match.league || ""}</span>
-        <span class="cas-badge ${match.status === "LIVE" ? "cas-live" : match.status === "FT" ? "cas-ft" : "cas-pre"}">
-          ${match.status}
-        </span>
-      </div>
-      <div class="cas-scoreline">
+    <div class="cas-match ${statusClass}">
+      <div class="cas-team">
         <span class="cas-team-name">${match.home_team}</span>
-        <span class="cas-score">${match.home_score} : ${match.away_score}</span>
+      </div>
+      <div class="cas-score">
+        <span>${match.home_score ?? "-"}</span> : <span>${match.away_score ?? "-"}</span>
+      </div>
+      <div class="cas-team">
         <span class="cas-team-name">${match.away_team}</span>
       </div>
-    </div>
-  `;
+      <div class="cas-badge ${statusClass}">
+        ${isLive ? '<span class="cas-dot"></span>' : ''}${match.status}
+      </div>
+    </div>`;
 }
 
 function renderAll(data) {
   const container = document.getElementById("cas-livescore");
-
   if (!data?.matches?.length) {
-    container.innerHTML = "<div style='color:white;padding:20px;'>No matches</div>";
+    container.innerHTML = `<div class="cas-empty">No live or recent matches</div>`;
+    autoResize();
     return;
   }
+
+  // Group matches by league
+  const leagues = {};
+  data.matches.forEach(match => {
+    if (!leagues[match.league]) leagues[match.league] = [];
+    leagues[match.league].push(match);
+  });
 
   const updated = data.last_updated
     ? new Date(data.last_updated).toLocaleTimeString("en-GB", {hour:"2-digit", minute:"2-digit"})
     : "";
 
-  container.innerHTML = `
-    <div class="cas-widget">
-      <div class="cas-widget-header">
-        <span class="cas-widget-title">⚽ Live Scores</span>
-        <span class="cas-updated">${updated}</span>
-      </div>
-      ${data.matches.map(renderMatch).join("")}
-    </div>
-  `;
+  let html = `<div class="cas-widget">
+    <div class="cas-widget-header">
+      <span class="cas-widget-title">⚽ Cardiff All Stars — Live Scores</span>
+      <span class="cas-updated">Updated: ${updated}</span>
+    </div>`;
+
+  for (const league in leagues) {
+    html += `<div class="cas-league-group">
+      <div class="cas-league-title">${league}</div>
+      ${leagues[league].map(renderMatch).join("")}
+    </div>`;
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
+  autoResize();
+}
+
+// Dynamically resize parent iframe
+function autoResize() {
+  if (window.frameElement) {
+    window.frameElement.style.height = document.body.scrollHeight + "px";
+  }
 }
 
 async function fetchScores() {
@@ -143,14 +214,16 @@ async function fetchScores() {
     const text = await res.text();
     const data = JSON.parse(text);
     renderAll(data);
-  } catch (e) {
-    document.getElementById("cas-livescore").innerHTML =
-      "<div style='color:red;padding:20px;'>Error loading scores</div>";
+  } catch(e) {
+    console.error("Failed to load scores:", e);
+    const container = document.getElementById("cas-livescore");
+    container.innerHTML = `<div class="cas-empty">Error loading scores</div>`;
+    autoResize();
   }
 }
 
 fetchScores();
-setInterval(fetchScores, 60000);
+setInterval(fetchScores, POLL_MS);
 </script>
 
 </body>
