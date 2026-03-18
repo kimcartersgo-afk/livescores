@@ -12,12 +12,13 @@ body {
   font-family: 'Segoe UI', Arial, sans-serif;
 }
 
+/* Widget styles */
 .cas-widget {
   max-width: 900px;
   margin: 0 auto;
   border-radius: 12px;
   overflow: hidden;
-  background: #0a1628;
+  background: #2b1e0f; /* dark background for orange theme */
   box-shadow: 0 4px 24px rgba(0,0,0,0.4);
 }
 
@@ -25,21 +26,21 @@ body {
   display: flex;
   justify-content: space-between;
   padding: 14px 20px;
-  background: #102040;
-  border-bottom: 2px solid #1e3a5f;
+  background: #2b1e0f;
+  border-bottom: 2px solid #ff9c3b;
 }
 
-.cas-widget-title { font-size: 1rem; font-weight: 700; color: #fff; text-transform: uppercase; }
-.cas-updated { font-size: 0.75rem; color: #7a9bbf; }
+.cas-widget-title { font-size: 1rem; font-weight: 700; color: #ff9c3b; text-transform: uppercase; }
+.cas-updated { font-size: 0.75rem; color: #ffb87a; }
 
 .cas-league-group { margin: 10px 0; }
 .cas-league-title {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #88aadd;
+  color: #ffa347;
   padding: 6px 20px;
   text-transform: uppercase;
-  background: #102040;
+  background: #2b1e0f;
 }
 
 .cas-match {
@@ -47,22 +48,25 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 20px;
-  border-bottom: 1px solid #1a2f4a;
+  border-bottom: 1px solid #3a2715;
   transition: background 0.2s;
 }
 
-.cas-match:hover { background: #0f2030; }
+.cas-match:hover { background: #3a2715; }
 .cas-team { display: flex; align-items: center; }
-.cas-team-name { font-weight: 700; color: #e8eef5; }
+.cas-team-name { font-weight: 700; color: #ffd9b3; }
 .cas-score { font-size: 1.5rem; font-weight: bold; color: #fff; min-width: 80px; text-align: center; }
 
 .cas-badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 20px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; }
-.cas-live { color: #ff5555; }
-.cas-ft { color: #50d090; }
-.cas-pre { color: #88aadd; }
+.cas-badge.cas-live { background: rgba(255,156,59,0.15); color: #ff9c3b; border: 1px solid #ff9c3400; }
+.cas-badge.cas-ft { background: rgba(255,180,100,0.1); color: #ffb84d; border: 1px solid #ffb84d40; }
+.cas-badge.cas-pre { background: rgba(255,200,120,0.1); color: #ffc878; border: 1px solid #ffc87840; }
 
 .cas-dot {
-  width: 8px; height: 8px; border-radius: 50%; background: #ff5555;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff9c3b;
   animation: cas-pulse 1.4s ease-in-out infinite;
 }
 
@@ -71,7 +75,8 @@ body {
   50% { opacity: 0.4; transform: scale(0.7); }
 }
 
-.cas-empty { padding: 28px; text-align: center; color: #4a6a88; font-size: 0.9rem; }
+.cas-empty { padding: 28px; text-align: center; color: #ffb87a; font-size: 0.9rem; }
+
 @media (max-width: 520px) {
   .cas-score { font-size: 1.2rem; min-width: 60px; }
   .cas-team-name { font-size: 0.82rem; }
