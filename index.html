@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAS Live Scores</title>
+<title>CAS Live Scores & Fixtures</title>
 
 <style>
 body {
@@ -95,12 +95,21 @@ const POLL_MS = 60000;
 function renderMatch(match) {
   const statusClass = match.status === "LIVE" ? "cas-live" : match.status === "FT" ? "cas-ft" : "cas-pre";
   const isLive = match.status === "LIVE";
+  
+  // Format match date
+  let dateStr = "";
+  if (match.match_date) {
+    const d = new Date(match.match_date);
+    dateStr = `<div style="font-size:0.75rem;color:#ffb87a;">${d.toLocaleDateString('en-GB',{day:'2-digit', month:'short'})} ${d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</div>`;
+  }
+  
   return `
     <div class="cas-match ${statusClass}">
       <div class="cas-team"><span class="cas-team-name">${match.home_team}</span></div>
       <div class="cas-score"><span>${match.home_score ?? "-"}</span> : <span>${match.away_score ?? "-"}</span></div>
       <div class="cas-team"><span class="cas-team-name">${match.away_team}</span></div>
       <div class="cas-badge ${statusClass}">${isLive ? '<span class="cas-dot"></span>' : ''}${match.status}</div>
+      ${dateStr}
     </div>`;
 }
 
@@ -109,13 +118,32 @@ function renderAll(data) {
   const container = document.getElementById("cas-livescore");
 
   if (!data || !data.matches || !data.matches.length) {
-    container.innerHTML = `<div class="cas-empty">No live or recent matches</div>`;
+    container.innerHTML = `<div class="cas-empty">No scheduled matches</div>`;
     autoResize();
     return;
   }
 
+  const now = new Date();
+  const thisMonth = now.getMonth();
+  const thisYear = now.getFullYear();
+
+  // Filter: this month + future
+  const filteredMatches = data.matches.filter(m => {
+    if (!m.match_date) return false;
+    const matchDate = new Date(m.match_date);
+    return (matchDate.getFullYear() === thisYear && matchDate.getMonth() === thisMonth)
+           || (matchDate > now);
+  });
+
+  if (!filteredMatches.length) {
+    container.innerHTML = `<div class="cas-empty">No matches this month or upcoming</div>`;
+    autoResize();
+    return;
+  }
+
+  // Group by league
   const leagues = {};
-  data.matches.forEach(match => {
+  filteredMatches.forEach(match => {
     if (!leagues[match.league]) leagues[match.league] = [];
     leagues[match.league].push(match);
   });
@@ -126,7 +154,7 @@ function renderAll(data) {
 
   let html = `<div class="cas-widget">
     <div class="cas-widget-header">
-      <span class="cas-widget-title">⚽ Cardiff All Stars — Live Scores</span>
+      <span class="cas-widget-title">⚽ Cardiff All Stars — Live Scores & Fixtures</span>
       <span class="cas-updated">Updated: ${updated}</span>
     </div>`;
 
@@ -142,7 +170,7 @@ function renderAll(data) {
   autoResize();
 }
 
-// Dynamically resize iframe height
+// Dynamically resize iframe
 function autoResize() {
   if (window.frameElement) {
     window.frameElement.style.height = document.body.scrollHeight + "px";
@@ -162,7 +190,7 @@ async function fetchScores() {
     renderAll(data);
   } catch(e) {
     console.error("Failed to load scores:", e);
-    container.innerHTML = `<div class="cas-empty">Error loading scores. Please check the Gist URL or format.</div>`;
+    container.innerHTML = `<div class="cas-empty">Error loading scores. Check Gist URL/format.</div>`;
     autoResize();
   }
 }
