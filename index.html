@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAS Live Scores</title>
+
+<style>
+body {
+  margin: 0;
+  background: transparent;
+}
+
+/* Widget styles */
+.cas-widget {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  max-width: 860px;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0a1628;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+.cas-widget-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: #102040;
+  border-bottom: 2px solid #1e3a5f;
+}
+
+.cas-widget-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.cas-updated {
+  font-size: 0.75rem;
+  color: #7a9bbf;
+}
+
+.cas-match {
+  border-bottom: 1px solid #1a2f4a;
+  padding: 16px 20px;
+}
+
+.cas-match-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.cas-league {
+  font-size: 0.7rem;
+  color: #7a9bbf;
+  text-transform: uppercase;
+}
+
+.cas-badge {
+  font-size: 0.7rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: bold;
+}
+
+.cas-live { color: #ff5555; }
+.cas-ft { color: #50d090; }
+.cas-pre { color: #88aadd; }
+
+.cas-scoreline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cas-team-name {
+  font-weight: 700;
+  color: #e8eef5;
+}
+
+.cas-score {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+}
+</style>
+</head>
+
+<body>
+
+<div id="cas-livescore"></div>
+
+<script>
+const GIST_URL = "https://gist.githubusercontent.com/chunkehdemunkeh-afk/250ca7f539145a1ae3deae88cb5f360e/raw/ae2459ce2e6f7497e272fa864c9c69a3e6bd6610/gistfile1.txt";
+
+function renderMatch(match) {
+  return `
+    <div class="cas-match">
+      <div class="cas-match-header">
+        <span class="cas-league">${match.league || ""}</span>
+        <span class="cas-badge ${match.status === "LIVE" ? "cas-live" : match.status === "FT" ? "cas-ft" : "cas-pre"}">
+          ${match.status}
+        </span>
+      </div>
+      <div class="cas-scoreline">
+        <span class="cas-team-name">${match.home_team}</span>
+        <span class="cas-score">${match.home_score} : ${match.away_score}</span>
+        <span class="cas-team-name">${match.away_team}</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderAll(data) {
+  const container = document.getElementById("cas-livescore");
+
+  if (!data?.matches?.length) {
+    container.innerHTML = "<div style='color:white;padding:20px;'>No matches</div>";
+    return;
+  }
+
+  const updated = data.last_updated
+    ? new Date(data.last_updated).toLocaleTimeString("en-GB", {hour:"2-digit", minute:"2-digit"})
+    : "";
+
+  container.innerHTML = `
+    <div class="cas-widget">
+      <div class="cas-widget-header">
+        <span class="cas-widget-title">⚽ Live Scores</span>
+        <span class="cas-updated">${updated}</span>
+      </div>
+      ${data.matches.map(renderMatch).join("")}
+    </div>
+  `;
+}
+
+async function fetchScores() {
+  try {
+    const res = await fetch(GIST_URL + "?t=" + Date.now());
+    const text = await res.text();
+    const data = JSON.parse(text);
+    renderAll(data);
+  } catch (e) {
+    document.getElementById("cas-livescore").innerHTML =
+      "<div style='color:red;padding:20px;'>Error loading scores</div>";
+  }
+}
+
+fetchScores();
+setInterval(fetchScores, 60000);
+</script>
+
+</body>
+</html>
